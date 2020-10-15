@@ -42,16 +42,34 @@ async def search(self, search_term):
 
     host = "https://www.biernet.nl"
 
-    first_result = PyQuery(PyQuery(webpage)('li.cardStyle')[0])
+    results = PyQuery(webpage)('li.cardStyle')
+    first_result = PyQuery(results[0])
+    index = 0
+
+    # Check if the cheapest option is not 0.0
+    for i, result in enumerate(results):
+        name = PyQuery(result)('div.item_image')('a')('img').attr('title')
+        if '0.0' not in name:
+            first_result = PyQuery(result)
+            index = i
+            break
+
     # Get all the various information from the HTML page
     biernet_url = host + first_result('div.item_image')('a').attr('href')
     image = host + first_result('div.item_image')('a')('img').attr('data-src')
     brand = first_result('h3.merkenH3')('a')[0].text
 
+    # Biernets naming conventions are speaking the language of the gods,
+    #  So we first need to determine the amount of 's' in the word 'prijs'
+    if index > 0:
+        prijs = 'prijsss'
+    else:
+        prijs = 'prijss'
+
     product = first_result('p.artikel')('a')[0].text
     product_name = first_result('div.item_image')('a')('img').attr('title')
-    original_price = first_result('p.prijss')('span.van_prijss').text()
-    sale_price = first_result('p.prijss')('span.voor_prijss').text()
+    original_price = first_result(f'p.{prijs}')(f'span.van_{prijs}').text()
+    sale_price = first_result(f'p.{prijs}')(f'span.voor_{prijs}').text()
     sale = PyQuery(first_result('div.informatie')('li.item')[0]).text()
     sale = sale.replace('korting', 'off')
     sale_price_liter = PyQuery(first_result('div.informatie')('li.item')[1]).text()
